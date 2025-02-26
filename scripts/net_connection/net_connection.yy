@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"net_connection",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"net_connection",
+  "parent":{
+    "name":"patchwire",
+    "path":"folders/Scripts/patchwire.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

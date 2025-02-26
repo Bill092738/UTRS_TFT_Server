@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"net_event_management",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"net_event_management",
+  "parent":{
+    "name":"patchwire",
+    "path":"folders/Scripts/patchwire.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}
