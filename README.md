@@ -33,5 +33,9 @@ To start the server, run the following command:
 ```
 python Server.py
 ```
+
+**BUG**
+Async - Networking event is firing, but the `async_load[? "type"]` value is `3`, not `64`. In GameMaker, the expected value for receiving network data over a TCP socket is `network_type_data`, which equals `64`. Receiving `3` instead suggests a different network event is occurring.
+
 # License
 MIT License
