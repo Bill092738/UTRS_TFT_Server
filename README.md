@@ -15,7 +15,7 @@ main/
 
 ## Technical Principal
 
-![doc >>](doc/technical.md)
+- [doc >>](doc/technical.md)
 
 ## Features
 
