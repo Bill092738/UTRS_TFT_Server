@@ -13,6 +13,10 @@ main/
 │   └── translateGML.gml   # GameMaker coordinate translation utilities
 ```
 
+## Technical Principal
+
+![doc >>](doc/technical.md)
+
 ## Features
 
 - TCP Server with real-time client communication
