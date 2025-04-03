@@ -5,7 +5,7 @@ A simple TCP server and client implementation with both Java and GameMaker Studi
 ## Project Structure
 
 ```
-NST6/
+main/
 ├── src/
 │   ├── App.java           # TCP Server implementation
 │   ├── demoCli.java       # Java client implementation
