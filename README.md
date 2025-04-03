@@ -65,7 +65,7 @@ The server will start listening on 127.0.0.1:23363
    ```
 
 ### GameMaker Studio 2 Client
-1. Create a new GameMaker Studio 2 project
+1. Create a new GameMaker Studio project
 2. Import demoCli.gml and translateGML.gml
 3. Create an obj_player object
 4. Add network functionality using GMNet or similar extension
