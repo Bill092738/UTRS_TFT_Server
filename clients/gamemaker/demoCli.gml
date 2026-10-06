@@ -88,7 +88,7 @@ function process_command(command) {
 // 辅助函数
 function validate_coordinates(coords) {
     // 验证坐标格式 (x,y)
-    var pattern = "\\(\\d+,\\d+\\)";
+    var pattern = "\\(-?\\d+,-?\\d+\\)"; // 允许负坐标
     return string_match(coords, pattern);
 }
 

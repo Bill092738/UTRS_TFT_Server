@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UTRS Grid</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>UTRS Grid</h1>
+    <span id="status" class="status offline">Connecting…</span>
+  </header>
+
+  <main>
+    <section class="board-wrap">
+      <canvas id="board" aria-label="Map around your player"></canvas>
+      <div class="board-footer">
+        <span id="me-pos">Not joined</span>
+        <span id="hover-pos"></span>
+        <span class="hint">WASD / arrow keys to step, click a cell to jump</span>
+      </div>
+    </section>
+
+    <aside>
+      <form id="join-form" class="card">
+        <label for="user-id">User ID</label>
+        <div class="row">
+          <input id="user-id" autocomplete="off" maxlength="32" pattern="[A-Za-z0-9_\-]{1,32}" required placeholder="e.g. User1">
+          <button type="submit">Join</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <h2>Online <span id="online-count" class="muted"></span></h2>
+        <ul id="users"></ul>
+      </div>
+
+      <div class="card chat">
+        <h2>Chat</h2>
+        <ol id="log"></ol>
+        <form id="chat-form" class="row">
+          <select id="target" aria-label="Send to"><option value="all">all</option></select>
+          <input id="message" autocomplete="off" maxlength="500" placeholder="Message" disabled>
+          <button type="submit" disabled>Send</button>
+        </form>
+      </div>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

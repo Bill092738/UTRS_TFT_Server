@@ -1,109 +1,77 @@
-# Basic Principles
+# Protocol
 
-### Command Format
+The same text commands are used by every client. TCP clients send them one per line; the web
+frontend POSTs them over HTTP. All text is UTF-8.
+
+## Commands (client → server)
+
 ```
-Action(param1, param2, ...)
+Action(arg, arg, ...)
 ```
-- Actions are case-sensitive (e.g., Move, Broadcast, Help)
-- Parameters are comma-separated
-- Parameters can be strings, coordinates, or numbers
-- String parameters should be in double quotes
 
-### Coordinate Format
-```
-(x,y)
-```
-- x and y are integers
-- Range: -1000 to +1000
-- Origin (0,0) is at center
-- No spaces between numbers and commas
+- Action names are case-sensitive: `Join`, `Move`, `Broadcast`, `Users`, `Help`.
+- An argument is one of:
+  - a **word**: `User1`, `all`. A user ID is 1-32 of `A-Z a-z 0-9 _ -`, and cannot be `all`.
+  - a **coordinate**: `(x,y)` with integers in -1000..1000. Spaces and negative numbers are fine: `( -3 , 4 )`.
+  - a **quoted string**: `"Hello, (world)!"`. Commas and parentheses inside are fine; write `\"` for a quote and `\\` for a backslash.
+- Whitespace around arguments is ignored.
 
-## Command Types
+| Command | Meaning |
+| --- | --- |
+| `Join(userID)` | Say who this connection is. New users start at (0,0); returning users get their saved position. |
+| `Move(userID, (x,y), (x2,y2))` | Move from the current position to any in-bounds cell. The current position must match the server's record. |
+| `Broadcast(userID, target, "text")` | `target` is `all` or an online user ID (a direct message, delivered to sender and target). Max 500 characters. |
+| `Users()` | List online users and positions. |
+| `Help()` | Show the command list. |
 
-### 1. Move Command
-```
-Move(userID, currentPosition, destination)
-```
-Example:
-```
-Move(User1, (0,0), (1,1))
-```
-- Validates current position matches server record
-- Updates user position in 2D array
-- Broadcasts movement to all clients
+**Identity.** A connection is bound to the first user ID it uses, either through `Join` or through
+the first `Move`/`Broadcast` (older clients never send `Join`). After that, commands naming any other
+user are rejected. Several connections may be the same user, e.g. two browser tabs.
 
-### 2. Broadcast Command
-```
-Broadcast(userID, target, "message")
-```
-Example:
-```
-Broadcast(User1, all, "Hello World!")
-```
-- Message must be in double quotes
-- Target can be "all" or specific userID
-- Stores message history in userData
+There is no authentication: anyone who can reach the server can pick any user ID. Keep the default
+`--host 127.0.0.1` or run it on a trusted network.
 
-### 3. Help Command
-```
-Help()
-```
-- Takes no parameters
-- Returns list of valid commands
-- No authentication required
+## Events (server → client)
 
-## Communication Flow
+Over TCP, each event is one line in the same `Name(args)` style. On the web stream, each is a JSON
+object.
 
-1. **Client to Server**
-   - Client formats command string
-   - Sends via TCP socket
-   - Waits for server response
+| TCP line | JSON `type` | Sent to |
+| --- | --- | --- |
+| `Welcome(User1, (0,0))` | `welcome` `{user, pos}` | the connection that joined |
+| `User(User2, (5,5))` | `user` `{user, pos}` | the joiner (roster) or whoever sent `Users()` |
+| `Joined(User1, (0,0))` | `joined` `{user, pos}` | everyone else, when a user comes online |
+| `Left(User1)` | `left` `{user}` | everyone, when a user's last connection closes |
+| `Moved(User1, (0,0), (1,1))` | `moved` `{user, from, to}` | everyone |
+| `Message(User1, all, "text")` | `message` `{from, target, text}` | everyone, or the sender and target for direct messages |
+| `Info("text")` | `info` `{text}` | the requester |
+| `Error("reason")` | `error` `{text}` | the requester |
 
-2. **Server Processing**
-   - Parses command string
-   - Validates format and parameters
-   - Updates internal state
-   - Broadcasts updates if needed
+`pos`, `from` and `to` are `{"x":0,"y":0}`.
 
-3. **Server to Client**
-   - Formats response string
-   - Broadcasts to all connected clients
-   - Updates saved state in save.txt
+## Web API
 
-## Error Handling
+| Endpoint | |
+| --- | --- |
+| `GET /api/events` | Server-Sent Events. The first message is `{"type":"session","id":"..."}`, then events as above. A `: ping` comment is sent every 15 s. |
+| `POST /api/command?session=ID` | Body: one or more command lines (`text/plain`). Returns `204`; replies arrive on the event stream. `404` if the session is unknown. |
+| `GET /api/state` | `{"bounds":{"min":-1000,"max":1000},"users":[{"user","pos","online"}]}` for every known user. |
+| `GET /*` | Static files from `--web-root`. |
 
-### Format Errors
-- Invalid command format
-- Missing parameters
-- Malformed coordinates
-- Unquoted strings
+API responses carry `Access-Control-Allow-Origin: *`, so a frontend hosted somewhere else can use the
+API: open `index.html?server=http://host:8080`.
 
-### Logic Errors
-- Out of bounds coordinates
-- Invalid current position
-- Unknown userID
-- Unknown target
+To write another client, such as a mobile app or a bot, open the event stream, keep the session id,
+and POST commands with it.
 
-## Benefits of String Protocol
+## Persistence
 
-1. **Human Readable**
-   - Easy to debug
-   - Self-documenting
-   - Simple to implement
+`save.txt` holds one `userID=x,y` per line. It is written every 5 seconds when something changed, and
+again on shutdown (Ctrl+C). It is replaced atomically, so a crash mid-write can't corrupt it. Lines from
+the 3.0 format (`User1=Broadcast to all: ...`) are skipped on load.
 
-2. **Language Agnostic**
-   - Works with any TCP client
-   - Easy to implement in different languages
-   - No special binary protocols needed
+## Threading
 
-3. **Flexible**
-   - Easy to add new commands
-   - Simple to modify parameters
-   - Supports different data types
-
-## Implementation Notes
-
-- Use regular expressions for validation
-- Store command history
-- Implement command queuing if needed
-- Consider adding checksums for security
+Each connection has a bounded outgoing queue drained by its own thread, so a slow client can never stall
+the game. A client that falls more than 1024 events behind is disconnected. Game state changes are
+serialised inside `GameServer`.
